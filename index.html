@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academia Hipatia - Sistema de Simulacro de Examen de Admisión</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            gold: '#D4AF37',
+                            darkGold: '#AA820A',
+                            black: '#121212',
+                            beige: '#FDFBF7',
+                            beigeDark: '#F3EFE6',
+                            blue: '#1e40af',
+                            red: '#dc2626',
+                            green: '#15803d'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Optical Bubble Styling */
+        .bubble {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid #94a3b8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.75rem;
+            color: #475569;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s ease-in-out;
+            background-color: #ffffff;
+        }
+
+        .bubble:hover {
+            border-color: #334155;
+            background-color: #f1f5f9;
+        }
+
+        .bubble.selected {
+            background-color: #1e293b;
+            color: #ffffff;
+            border-color: #0f172a;
+            box-shadow: inset 0 0 4px rgba(0,0,0,0.5);
+        }
+
+        /* Color Section Themes for Bubbles */
+        .section-red .bubble.selected {
+            background-color: #b91c1c;
+            border-color: #991b1b;
+        }
+
+        .section-green .bubble.selected {
+            background-color: #15803d;
+            border-color: #166534;
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Hide scrollbars for nav tabs */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Animations */
+        @keyframes sectionFadeInDown {
+            0% {
+                opacity: 0;
+                transform: translateY(-12px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-section-open {
+            animation: sectionFadeInDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Smooth accordion collapse transition */
+        .section-content-wrapper {
+            transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease-in-out;
+            max-height: 5000px;
+            opacity: 1;
+            overflow: hidden;
+        }
+
+        .section-content-wrapper.collapsed {
+            max-height: 0 !important;
+            opacity: 0;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+        }
+
+        .chevron-toggle {
+            transition: transform 0.3s ease;
+        }
+
+        .chevron-toggle.rotated {
+            transform: rotate(-180deg);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col antialiased selection:bg-amber-200">
+
+    <header class="bg-brand-black text-white border-b-4 border-brand-gold sticky top-0 z-40 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 flex flex-col gap-3">
+            
+            <!-- Fila Superior: Marca/Logo + Botones Principales -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div class="flex items-center space-x-3.5">
+                    <div class="w-11 h-11 rounded-full bg-gradient-to-tr from-brand-gold to-amber-200 p-0.5 shadow-lg flex-shrink-0">
+                        <div class="w-full h-full bg-brand-black rounded-full flex items-center justify-center border border-brand-gold/40">
+                            <i class="fa-solid fa-graduation-cap text-brand-gold text-xl"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="text-lg sm:text-xl font-black tracking-wider text-brand-gold uppercase leading-tight">
+                            ACADEMIA HIPATIA
+                        </h1>
+                        <p class="text-[11px] text-amber-100/80 font-medium">
+                            Sistema de Simulacro de Examen de Admisión
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-2.5 w-full sm:w-auto justify-end">
+                    <button onclick="scrollToSection('sec-identificacion')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition bg-amber-500/20 text-brand-gold border border-brand-gold/40 hover:bg-amber-500/30">
+                        <i class="fa-solid fa-file-signature mr-1"></i> Ficha Óptica
+                    </button>
+                    <button onclick="openAdminAuthModal()" class="bg-gradient-to-r from-brand-gold to-amber-500 hover:from-amber-500 hover:to-brand-gold text-brand-black font-bold text-xs px-3.5 py-1.5 rounded-lg shadow transition transform active:scale-95 flex items-center space-x-1.5">
+                        <i class="fa-solid fa-user-shield"></i>
+                        <span>Panel Docente</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Fila Inferior: Información del Examen y Reloj/Cronómetro -->
+            <div class="flex flex-wrap items-center justify-between pt-2 border-t border-slate-800 text-xs text-slate-300 gap-2">
+                <div class="flex items-center space-x-2 font-medium">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded bg-slate-800 text-amber-300 border border-slate-700 text-[11px]">
+                        <i class="fa-solid fa-list-check mr-1 text-[10px]"></i> 100 Preguntas
+                    </span>
+                    <span class="hidden sm:inline text-slate-500">•</span>
+                    <span class="hidden sm:inline text-slate-400">Puntaje Máximo: 2000.00 pts</span>
+                </div>
+
+                <!-- Temporizador Flotante Superior -->
+                <div id="headerTimerCard" class="hidden bg-slate-900 border border-amber-500/50 px-3 py-1 rounded-lg flex items-center space-x-2 shadow-inner">
+                    <i class="fa-solid fa-stopwatch text-brand-gold text-sm animate-pulse"></i>
+                    <div class="flex items-center space-x-1.5">
+                        <span class="text-[10px] uppercase font-bold text-slate-400">Tiempo:</span>
+                        <span id="timerDisplay" class="text-sm font-black font-mono text-brand-gold">02:30:00</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Navigation bar for smooth scrolling to sections -->
+        <nav class="bg-brand-black border-t border-slate-800 text-xs sm:text-sm font-semibold overflow-x-auto no-scrollbar">
+            <div class="max-w-7xl mx-auto flex whitespace-nowrap px-2">
+                <button onclick="scrollToSection('sec-identificacion')" class="px-4 py-2.5 text-blue-400 hover:bg-slate-900 border-b-2 border-blue-500 flex items-center space-x-2 transition">
+                    <i class="fa-solid fa-id-card"></i>
+                    <span>1. Identificación (Azul)</span>
+                </button>
+                <button onclick="scrollToSection('sec-actitud')" class="px-4 py-2.5 text-red-400 hover:bg-slate-900 border-b-2 border-red-500 flex items-center space-x-2 transition">
+                    <i class="fa-solid fa-brain"></i>
+                    <span>2. Actitud y Hab. (Roja)</span>
+                </button>
+                <button onclick="scrollToSection('sec-conocimientos')" class="px-4 py-2.5 text-emerald-400 hover:bg-slate-900 border-b-2 border-emerald-500 flex items-center space-x-2 transition">
+                    <i class="fa-solid fa-book-open"></i>
+                    <span>3. Conocimientos (Verde)</span>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto p-3 sm:p-6 space-y-6">
+
+        <div class="bg-brand-beige rounded-xl p-4 shadow-sm border border-slate-200/80">
+            <div class="flex items-start space-x-3">
+                <div class="w-8 h-8 rounded-lg bg-amber-100 text-brand-darkGold flex items-center justify-center font-bold text-sm flex-shrink-0 mt-0.5">
+                    <i class="fa-solid fa-info"></i>
+                </div>
+                <div class="text-xs sm:text-sm text-slate-700 leading-relaxed">
+                    <strong class="text-slate-900 font-bold">Instrucciones de llenado:</strong> Marque una sola alternativa por pregunta en las burbujas correspondientes. Cada respuesta correcta suma <strong class="text-emerald-700 font-bold">+20.00 pts</strong> y cada respuesta errónea descuenta <strong class="text-red-600 font-bold">-1.125 pts</strong>. Al finalizar, haga clic en <strong class="text-slate-900 font-bold">"Procesar Respuestas"</strong> al final de la ficha.
+                </div>
+            </div>
+        </div>
+
+        <form id="opticalForm" onsubmit="handleStudentSubmit(event)" class="space-y-6">
+
+            <!-- 1. SECCIÓN DE IDENTIFICACIÓN (AZUL) -->
+            <section id="sec-identificacion" class="bg-white rounded-xl shadow-md border-2 border-blue-600 overflow-hidden transition animate-section-open">
+                <div class="bg-blue-600 px-4 py-3 text-white flex items-center justify-between cursor-pointer select-none" onclick="toggleSectionCollapse('sec-identificacion-wrapper', 'chevron-1')">
+                    <div class="flex items-center space-x-2 font-black text-sm sm:text-base tracking-wide">
+                        <i class="fa-solid fa-id-card text-lg"></i>
+                        <span>SECCIÓN DE IDENTIFICACIÓN</span>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="text-[10px] sm:text-xs bg-blue-800/80 px-2.5 py-1 rounded-full uppercase tracking-wider font-semibold">Registro Obligatorio</span>
+                        <i id="chevron-1" class="fa-solid fa-chevron-up chevron-toggle text-sm opacity-80"></i>
+                    </div>
+                </div>
+
+                <div id="sec-identificacion-wrapper" class="section-content-wrapper">
+                    <div class="p-4 sm:p-6 bg-blue-50/30 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">
+                                Apellidos y Nombres Completos <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="studentName" required placeholder="Ej: PÉREZ GÓMEZ, Juan Carlos" class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">
+                                Código de Postulante / DNI <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="studentDNI" required placeholder="Ej: 74839201" maxlength="10" class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">
+                                Área Académica <span class="text-red-500">*</span>
+                            </label>
+                            <select id="studentArea" required onchange="handleAreaChange()" class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none font-medium">
+                                <option value="">-- Seleccionar Área --</option>
+                                <option value="A">Área A - Ciencias de la Salud</option>
+                                <option value="B">Área B - Ciencias Básicas</option>
+                                <option value="C">Área C - Ingeniería</option>
+                                <option value="D">Área D - Ciencias Económicas y de la Gestión</option>
+                                <option value="E">Área E - Humanidades y Ciencias Jurídicas</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">
+                                Carrera Profesional <span class="text-red-500">*</span>
+                            </label>
+                            <select id="studentCareer" required disabled class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none font-medium disabled:bg-slate-100 disabled:text-slate-400">
+                                <option value="">-- Primero elija Área --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="px-4 py-3 bg-blue-100/50 border-t border-blue-200">
+                        <p class="text-xs text-blue-900 font-medium text-center sm:text-left">
+                            <i class="fa-solid fa-shield-halved mr-1"></i> Por favor complete sus datos personales y haga clic en <strong>"Comenzar Examen (2h 30m)"</strong> para habilitar la ficha y activar el temporizador.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <div id="startExamBanner" class="bg-gradient-to-r from-brand-black via-slate-900 to-brand-black p-5 rounded-xl shadow-lg border border-brand-gold/40 text-white flex flex-col md:flex-row items-center justify-between gap-4 animate-section-open">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-full bg-brand-gold/10 border border-brand-gold flex items-center justify-center text-brand-gold text-2xl flex-shrink-0 shadow-inner">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-base text-brand-gold tracking-wide">Control de Tiempo de Examen (2 Horas y 30 Minutos)</h3>
+                        <p class="text-xs text-brand-beigeDark/80">Una vez iniciado, dispondrá de 150 minutos continuos para responder las 100 preguntas.</p>
+                    </div>
+                </div>
+                <button type="button" onclick="startExamTimer()" id="btnStartExam" class="w-full md:w-auto bg-gradient-to-r from-brand-gold to-amber-500 hover:from-amber-400 hover:to-brand-gold text-brand-black font-extrabold text-sm px-6 py-3 rounded-xl shadow-lg hover:shadow-brand-gold/20 transition transform active:scale-95 flex items-center justify-center space-x-2 whitespace-nowrap">
+                    <i class="fa-solid fa-play text-brand-black"></i>
+                    <span>Comenzar Examen (2h 30m)</span>
+                </button>
+            </div>
+
+            <!-- 2. SECCIÓN DE PRUEBA DE ACTITUD Y HABILIDADES (ROJA) -->
+            <section id="sec-actitud" class="bg-white rounded-xl shadow-md border-2 border-red-600 overflow-hidden section-red animate-section-open">
+                <div class="bg-red-600 px-4 py-3 text-white flex items-center justify-between cursor-pointer select-none" onclick="toggleSectionCollapse('sec-actitud-wrapper', 'chevron-2')">
+                    <div class="flex items-center space-x-2 font-black text-sm sm:text-base tracking-wide">
+                        <i class="fa-solid fa-brain text-lg"></i>
+                        <span>SECCIÓN DE RESPUESTAS PRUEBA DE ACTITUD Y HABILIDADES</span>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span id="areaBadgeRed" class="text-xs bg-red-800/80 px-2 py-0.5 rounded font-bold">Pág. 1 | Preg. 1 - 30</span>
+                        <i id="chevron-2" class="fa-solid fa-chevron-up chevron-toggle text-sm opacity-80"></i>
+                    </div>
+                </div>
+
+                <div id="sec-actitud-wrapper" class="section-content-wrapper">
+                    <div id="actitudGrid" class="p-3 sm:p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-slate-50">
+                        <!-- Dynamic Course Cards for Section 2 -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. SECCIÓN DE PRUEBA DE CONOCIMIENTOS (VERDE) -->
+            <section id="sec-conocimientos" class="bg-white rounded-xl shadow-md border-2 border-emerald-600 overflow-hidden section-green animate-section-open">
+                <div class="bg-emerald-600 px-4 py-3 text-white flex items-center justify-between cursor-pointer select-none" onclick="toggleSectionCollapse('sec-conocimientos-wrapper', 'chevron-3')">
+                    <div class="flex items-center space-x-2 font-black text-sm sm:text-base tracking-wide">
+                        <i class="fa-solid fa-book-open text-lg"></i>
+                        <span>SECCIÓN DE RESPUESTAS PRUEBA DE CONOCIMIENTOS</span>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span id="areaBadgeGreen" class="text-xs bg-emerald-800/80 px-2 py-0.5 rounded font-bold">Pág. 2 | Preg. 31 - 100</span>
+                        <i id="chevron-3" class="fa-solid fa-chevron-up chevron-toggle text-sm opacity-80"></i>
+                    </div>
+                </div>
+
+                <div id="sec-conocimientos-wrapper" class="section-content-wrapper">
+                    <div id="conocimientosGrid" class="p-3 sm:p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-slate-50">
+                        <!-- Dynamic Course Cards for Section 3 -->
+                    </div>
+                </div>
+            </section>
+
+            <div class="p-4 bg-white rounded-xl shadow-lg border border-slate-200 flex items-center justify-between sticky bottom-4 z-30">
+                <div class="flex items-center space-x-4">
+                    <div class="text-xs text-slate-600 font-medium">
+                        <span id="answeredCount" class="font-bold text-slate-900">0</span> de 100 respondidas
+                    </div>
+                    <div id="footerTimerDisplay" class="text-xs font-mono font-black px-2.5 py-1 bg-slate-900 text-brand-gold rounded-lg border border-amber-500/40 hidden">
+                        <i class="fa-solid fa-clock mr-1"></i> <span id="mobileTimerText">02:30:00</span>
+                    </div>
+                </div>
+                <button type="submit" id="btnSubmitExam" disabled class="bg-slate-400 text-white font-bold text-sm px-6 py-2.5 rounded-lg shadow transition cursor-not-allowed">
+                    Procesar Respuestas
+                </button>
+            </div>
+        </form>
+
+    </main>
+
+    <div id="studentResultModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden my-auto border border-slate-200">
+            <div class="bg-gradient-to-r from-brand-black via-slate-900 to-brand-black p-4 text-white flex items-center justify-between border-b-2 border-brand-gold">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-square-poll-vertical text-brand-gold text-2xl"></i>
+                    <div>
+                        <h3 class="font-bold text-lg text-brand-gold">Resultados del Examen de Admisión</h3>
+                        <p class="text-xs text-slate-300">Resumen y Desglose Individual de Calificación</p>
+                    </div>
+                </div>
+                <button onclick="closeResultModal()" class="text-slate-400 hover:text-white text-xl p-1">&times;</button>
+            </div>
+
+            <div class="p-4 sm:p-6 overflow-y-auto space-y-6">
+                <div class="bg-amber-50/50 border border-amber-200 p-4 rounded-xl grid grid-cols-1 sm:grid-cols-5 gap-3 text-xs sm:text-sm">
+                    <div><strong class="text-slate-500 block">Postulante:</strong> <span id="resStudentName" class="font-bold text-slate-900">-</span></div>
+                    <div><strong class="text-slate-500 block">DNI / Código:</strong> <span id="resStudentDNI" class="font-bold text-slate-900">-</span></div>
+                    <div><strong class="text-slate-500 block">Área Postulada:</strong> <span id="resStudentArea" class="font-bold text-slate-900">-</span></div>
+                    <div><strong class="text-slate-500 block">Carrera:</strong> <span id="resStudentCareer" class="font-bold text-slate-900">-</span></div>
+                    <div><strong class="text-slate-500 block">Tiempo Empleado:</strong> <span id="resStudentTime" class="font-bold text-amber-700 font-mono bg-amber-100 px-2 py-0.5 rounded border border-amber-300 inline-block mt-0.5">-</span></div>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                    <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-xl">
+                        <span class="text-xs font-bold text-slate-500 uppercase block">Buenas (+20.00)</span>
+                        <span id="resGood" class="text-2xl font-black text-emerald-700">0</span>
+                    </div>
+                    <div class="bg-red-50 border border-red-200 p-3 rounded-xl">
+                        <span class="text-xs font-bold text-slate-500 uppercase block">Malas (-1.125)</span>
+                        <span id="resBad" class="text-2xl font-black text-red-600">0</span>
+                    </div>
+                    <div class="bg-slate-100 border border-slate-200 p-3 rounded-xl">
+                        <span class="text-xs font-bold text-slate-500 uppercase block">En Blanco (0)</span>
+                        <span id="resBlank" class="text-2xl font-black text-slate-600">0</span>
+                    </div>
+                    <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl shadow-inner">
+                        <span class="text-xs font-bold text-brand-darkGold uppercase block">Puntaje Total</span>
+                        <span id="resScore" class="text-2xl font-black text-amber-700">0.000</span>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-sm text-slate-800 mb-2">Desglose por Pregunta (Tus Respuestas vs. Clave Oficial)</h4>
+                    <div id="resQuestionsGrid" class="grid grid-cols-5 sm:grid-cols-10 gap-1.5 max-h-56 overflow-y-auto p-2 bg-slate-50 rounded-xl border border-slate-200">
+                        <!-- Rendered dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-100 p-3 px-4 flex justify-end border-t border-slate-200">
+                <button onclick="closeResultModal()" class="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-lg">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="adminAuthModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[55] flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 border border-slate-200 relative">
+            <button onclick="closeAdminAuthModal()" class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 text-xl font-bold p-1">&times;</button>
+            <div class="text-center space-y-3">
+                <div class="w-14 h-14 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto text-2xl shadow-inner">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900">Acceso Restringido</h3>
+                    <p class="text-xs text-slate-500 mt-1">Ingrese la clave de docente de 6 dígitos para acceder al panel (clave: 091125).</p>
+                </div>
+
+                <form onsubmit="verifyAdminPassword(event)" class="space-y-4 pt-2">
+                    <div class="relative">
+                        <input type="password" id="adminPasswordInput" maxlength="6" placeholder="******" required
+                            class="w-full pl-4 pr-10 py-2.5 text-center text-lg font-mono tracking-widest bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none font-bold">
+                        <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 text-sm">
+                            <i id="togglePasswordIcon" class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+
+                    <p id="adminAuthError" class="text-xs text-red-600 font-bold hidden">
+                        <i class="fa-solid fa-circle-xmark mr-1"></i> Contraseña incorrecta. Intente de nuevo.
+                    </p>
+
+                    <div class="flex items-center space-x-2 pt-1">
+                        <button type="button" onclick="closeAdminAuthModal()" class="w-1/2 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl transition">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="w-1/2 py-2.5 bg-gradient-to-r from-brand-gold to-amber-500 hover:from-amber-500 hover:to-brand-gold text-brand-black text-xs font-black rounded-xl shadow transition">
+                            Ingresar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="adminModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[92vh] flex flex-col overflow-hidden my-auto border border-slate-200">
+            <div class="bg-gradient-to-r from-brand-black via-slate-900 to-brand-black p-4 text-white flex items-center justify-between border-b-2 border-brand-gold">
+                <div class="flex items-center space-x-3">
+                    <div class="w-9 h-9 rounded-full bg-brand-gold text-slate-900 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-user-gear"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg text-brand-gold">Panel de Docente / Administración</h3>
+                        <p class="text-xs text-slate-300">Gestión de Claves, Estadísticas y Registros</p>
+                    </div>
+                </div>
+                <button onclick="toggleAdminModal()" class="text-slate-400 hover:text-white text-2xl p-1">&times;</button>
+            </div>
+
+            <div class="flex border-b border-slate-200 bg-slate-100 text-xs sm:text-sm font-bold">
+                <button onclick="switchAdminTab('keys')" id="tabBtnKeys" class="px-5 py-3 border-b-2 border-amber-500 text-amber-600 bg-white flex items-center space-x-2">
+                    <i class="fa-solid fa-key"></i>
+                    <span>Editar Claves Oficiales</span>
+                </button>
+                <button onclick="switchAdminTab('stats')" id="tabBtnStats" class="px-5 py-3 border-b-2 border-transparent text-slate-600 hover:text-slate-900 flex items-center space-x-2">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Estadísticas Generales</span>
+                </button>
+                <button onclick="switchAdminTab('students')" id="tabBtnStudents" class="px-5 py-3 border-b-2 border-transparent text-slate-600 hover:text-slate-900 flex items-center space-x-2">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Listado de Evaluados</span>
+                </button>
+            </div>
+
+            <div class="p-4 sm:p-6 overflow-y-auto space-y-6 flex-grow bg-slate-50">
+
+                <!-- TAB 1: EDITAR CLAVES -->
+                <div id="adminTabKeys" class="space-y-4">
+                    <div class="bg-amber-50 border border-amber-200 p-3 rounded-lg text-xs text-amber-900 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-circle-exclamation text-amber-600 text-base"></i>
+                            <span>Seleccione el <strong>Área</strong> para editar las respuestas correctas agrupadas por sus respectivos cursos:</span>
+                        </div>
+                        <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end">
+                            <div class="flex items-center space-x-2">
+                                <label class="font-bold text-slate-700 text-xs">Área:</label>
+                                <select id="adminAreaSelect" onchange="changeAdminAreaKeys()" class="text-xs font-bold p-1.5 rounded-lg border border-amber-300 bg-white focus:ring-2 focus:ring-amber-500">
+                                    <option value="A">Área A - Salud</option>
+                                    <option value="B">Área B - Ciencias Básicas</option>
+                                    <option value="C">Área C - Ingeniería</option>
+                                    <option value="D">Área D - Económicas</option>
+                                    <option value="E">Área E - Humanidades</option>
+                                </select>
+                            </div>
+                            <button onclick="autoFillRandomKeys()" class="text-xs bg-amber-200 hover:bg-amber-300 px-3 py-1.5 rounded-lg font-bold text-amber-900 transition">
+                                Llenar Claves Demo
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="adminKeysGrid" class="space-y-4 max-h-[55vh] overflow-y-auto p-2 bg-white rounded-xl border border-slate-200">
+                        <!-- Claves rendered dynamically by course sections -->
+                    </div>
+
+                    <div class="flex justify-end pt-2">
+                        <button onclick="saveAdminKeys()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-lg shadow transition">
+                            <i class="fa-solid fa-floppy-disk mr-1.5"></i> Guardar Claves Oficiales
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TAB 2: ESTADÍSTICAS GENERALES -->
+                <div id="adminTabStats" class="hidden space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs text-slate-500 font-bold uppercase">Total Evaluados</div>
+                                <div id="statTotalStudents" class="text-2xl font-black text-slate-800">0</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-trophy"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs text-slate-500 font-bold uppercase">Puntaje Máximo</div>
+                                <div id="statMaxScore" class="text-2xl font-black text-slate-800">0.00</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-chart-line"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs text-slate-500 font-bold uppercase">Promedio General</div>
+                                <div id="statAvgScore" class="text-2xl font-black text-slate-800">0.00</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-lg bg-red-100 text-red-600 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs text-slate-500 font-bold uppercase">Curso con más Error</div>
+                                <div id="statWorstCourse" class="text-sm font-bold text-red-600 truncate">N/A</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <h4 class="font-bold text-sm text-slate-800 mb-3 border-b pb-2">Promedio General por Área</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 text-center" id="areaAveragesGrid">
+                            <!-- Area averages rendered here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: LISTADO DE EVALUADOS -->
+                <div id="adminTabStudents" class="hidden space-y-4">
+                    <div class="flex flex-col md:flex-row justify-between items-center gap-3">
+                        <div class="flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto">
+                            <input type="text" id="searchStudentInput" oninput="filterStudentsTable()" placeholder="Buscar por Nombre o DNI..." class="w-full sm:w-56 px-3 py-2 text-xs border border-slate-300 rounded-lg">
+                            <div class="flex items-center space-x-1.5 w-full sm:w-auto">
+                                <label class="text-xs font-bold text-slate-600 whitespace-nowrap">Fecha:</label>
+                                <input type="date" id="filterDateInput" onchange="renderStudentsTable(); renderAdminStats();" class="text-xs p-1.5 border border-slate-300 rounded-lg bg-white font-semibold">
+                                <button onclick="resetDateFilter()" class="text-[11px] bg-slate-200 hover:bg-slate-300 px-2 py-1 rounded text-slate-700 font-bold" title="Ver todas las fechas">
+                                    Todas
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="flex space-x-2 w-full md:w-auto justify-end">
+                            <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-2 rounded-lg shadow transition flex items-center space-x-1.5">
+                                <i class="fa-solid fa-file-excel"></i>
+                                <span>Exportar CSV</span>
+                            </button>
+                            <button onclick="clearAllData()" class="bg-red-100 hover:bg-red-200 text-red-700 font-bold text-xs px-3.5 py-2 rounded-lg transition" title="Borrar registros">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead class="bg-slate-800 text-white font-bold uppercase text-[11px]">
+                                <tr>
+                                    <th class="p-3">#</th>
+                                    <th class="p-3">Fecha / Hora</th>
+                                    <th class="p-3">Postulante</th>
+                                    <th class="p-3">DNI / Código</th>
+                                    <th class="p-3">Área / Carrera</th>
+                                    <th class="p-3 text-center">B / M / E</th>
+                                    <th class="p-3 text-right">Puntaje</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentsTableBody" class="divide-y divide-slate-200">
+                                <!-- Rendered dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Structures for Academic Areas and Courses
+        const CAREERS_BY_AREA = {
+            'A': ['Medicina Humana', 'Enfermería', 'Obstetricia', 'Odontología', 'Psicología', 'Farmacia y Bioquímica', 'Veterinaria'],
+            'B': ['Biología', 'Física', 'Matemática', 'Química', 'Genética y Biotecnología'],
+            'C': [
+                'Ingeniería Química',
+                'Ingeniería Agroindustrial',
+                'Ingeniería del Agua y Tecnologías de Tratamiento',
+                'Ingeniería Mecánica de Fluidos',
+                'Ingeniería Geológica',
+                'Ingeniería Geográfica',
+                'Ingeniería de Minas',
+                'Ingeniería Metalúrgica',
+                'Ingeniería Civil',
+                'Ingeniería Ambiental',
+                'Arquitectura y Urbanismo',
+                'Ingeniería Industrial',
+                'Ingeniería Textil y Confecciones',
+                'Ingeniería de Seguridad y Salud en el Trabajo',
+                'Ingeniería Logística y Cadena de Suministro Digital',
+                'Ingeniería de Transportes y Sistemas Ferroviarios',
+                'Ingeniería Electrónica',
+                'Ingeniería Eléctrica',
+                'Ingeniería de Telecomunicaciones',
+                'Ingeniería Biomédica',
+                'Ingeniería Mecatrónica',
+                'Ingeniería Nuclear',
+                'Ingeniería de Sistemas',
+                'Ingeniería de Software',
+                'Ciencia de la Computación',
+                'Ingeniería de Inteligencia Artificial'
+            ],
+            'D': [
+                'Administración',
+                'Administración de Turismo',
+                'Administración de Negocios Internacionales',
+                'Administración de la Gastronomía',
+                'Administración Marítima y Portuaria',
+                'Marketing',
+                'Contabilidad',
+                'Gestión Tributaria',
+                'Auditoría Empresarial y del Sector Público',
+                'Presupuesto y Finanzas Públicas',
+                'Criminalística Financiera Forense',
+                'Economía',
+                'Economía Pública',
+                'Economía Internacional'
+            ],
+            'E': [
+                'Derecho',
+                'Ciencia Política',
+                'Literatura',
+                'Filosofía',
+                'Lingüística',
+                'Comunicación Social',
+                'Arte',
+                'Bibliotecología y Ciencias de la Información',
+                'Danza',
+                'Conservación y Restauración',
+                'Lengua, Traducción e Interpretación',
+                'Educación en Área: Educación Inicial',
+                'Educación en Área: Educación Primaria',
+                'Educación en Área: Educación Secundaria',
+                'Educación Física',
+                'Historia',
+                'Sociología',
+                'Antropología',
+                'Arqueología',
+                'Trabajo Social',
+                'Geografía'
+            ]
+        };
+
+        const COURSES_DISTRIBUTION = {
+            'A': [
+                /* SECCIÓN DE ACTITUD Y HABILIDADES (1 - 30) */
+                { name: 'Actitudinal', start: 1, end: 10 },
+                { name: 'Habilidad Verbal', start: 11, end: 20 },
+                { name: 'Habilidad Lógico-Matemática', start: 21, end: 30 },
+
+                /* CONOCIMIENTOS - ÁREA A (31 - 100) */
+                { name: 'Aritmética', start: 31, end: 34 },        // 4
+                { name: 'Geometría', start: 35, end: 37 },         // 3
+                { name: 'Álgebra', start: 38, end: 40 },           // 3
+                { name: 'Trigonometría', start: 41, end: 42 },     // 2
+                { name: 'Lenguaje', start: 43, end: 49 },          // 7
+                { name: 'Literatura', start: 50, end: 53 },        // 4
+                { name: 'Psicología', start: 54, end: 59 },        // 6
+                { name: 'Educación Cívica', start: 60, end: 63 },  // 4
+                { name: 'Historia del Perú', start: 64, end: 66 },  // 3
+                { name: 'Historia Universal', start: 67, end: 68 }, // 2
+                { name: 'Geografía', start: 69, end: 72 },         // 4
+                { name: 'Economía', start: 73, end: 76 },          // 4
+                { name: 'Filosofía', start: 77, end: 80 },         // 4
+                { name: 'Física', start: 81, end: 85 },            // 5
+                { name: 'Química', start: 86, end: 92 },           // 7
+                { name: 'Biología', start: 93, end: 100 }          // 8
+            ],
+            'B': [
+                /* SECCIÓN DE ACTITUD Y HABILIDADES (1 - 30) */
+                { name: 'Actitudinal', start: 1, end: 10 },
+                { name: 'Habilidad Verbal', start: 11, end: 20 },
+                { name: 'Habilidad Lógico-Matemática', start: 21, end: 30 },
+
+                /* CONOCIMIENTOS - ÁREA B (31 - 100) */
+                { name: 'Aritmética', start: 31, end: 34 },        // 4
+                { name: 'Geometría', start: 35, end: 38 },         // 4
+                { name: 'Álgebra', start: 39, end: 42 },           // 4
+                { name: 'Trigonometría', start: 43, end: 45 },     // 3
+                { name: 'Lenguaje', start: 46, end: 51 },          // 6
+                { name: 'Literatura', start: 52, end: 55 },        // 4
+                { name: 'Psicología', start: 56, end: 59 },        // 4
+                { name: 'Educación Cívica', start: 60, end: 63 },  // 4
+                { name: 'Historia del Perú', start: 64, end: 65 },  // 2
+                { name: 'Historia Universal', start: 66, end: 67 }, // 2
+                { name: 'Geografía', start: 68, end: 71 },         // 4
+                { name: 'Economía', start: 72, end: 75 },          // 4
+                { name: 'Filosofía', start: 76, end: 79 },         // 4
+                { name: 'Física', start: 80, end: 86 },            // 7
+                { name: 'Química', start: 87, end: 93 },           // 7
+                { name: 'Biología', start: 94, end: 100 }          // 7
+            ],
+            'C': [
+                /* SECCIÓN DE ACTITUD Y HABILIDADES (1 - 30) */
+                { name: 'Actitudinal', start: 1, end: 10 },
+                { name: 'Habilidad Verbal', start: 11, end: 20 },
+                { name: 'Habilidad Lógico-Matemática', start: 21, end: 30 },
+
+                /* CONOCIMIENTOS - ÁREA C (31 - 100) */
+                { name: 'Aritmética', start: 31, end: 34 },        // 4
+                { name: 'Geometría', start: 35, end: 38 },         // 4
+                { name: 'Álgebra', start: 39, end: 42 },           // 4
+                { name: 'Trigonometría', start: 43, end: 45 },     // 3
+                { name: 'Lenguaje', start: 46, end: 52 },          // 7
+                { name: 'Literatura', start: 53, end: 56 },        // 4
+                { name: 'Psicología', start: 57, end: 60 },        // 4
+                { name: 'Educación Cívica', start: 61, end: 64 },  // 4
+                { name: 'Historia del Perú', start: 65, end: 67 },  // 3
+                { name: 'Historia Universal', start: 68, end: 69 }, // 2
+                { name: 'Geografía', start: 70, end: 73 },         // 4
+                { name: 'Economía', start: 74, end: 77 },          // 4
+                { name: 'Filosofía', start: 78, end: 81 },         // 4
+                { name: 'Física', start: 82, end: 88 },            // 7
+                { name: 'Química', start: 89, end: 94 },           // 6
+                { name: 'Biología', start: 95, end: 100 }          // 6
+            ],
+            'D': [
+                /* SECCIÓN DE ACTITUD Y HABILIDADES (1 - 30) */
+                { name: 'Actitudinal', start: 1, end: 10 },
+                { name: 'Habilidad Verbal', start: 11, end: 20 },
+                { name: 'Habilidad Lógico-Matemática', start: 21, end: 30 },
+
+                /* CONOCIMIENTOS - ÁREA D (31 - 100) */
+                { name: 'Aritmética', start: 31, end: 34 },        // 4
+                { name: 'Geometría', start: 35, end: 38 },         // 4
+                { name: 'Álgebra', start: 39, end: 42 },           // 4
+                { name: 'Trigonometría', start: 43, end: 44 },     // 2
+                { name: 'Lenguaje', start: 45, end: 52 },          // 8
+                { name: 'Literatura', start: 53, end: 56 },        // 4
+                { name: 'Psicología', start: 57, end: 62 },        // 6
+                { name: 'Educación Cívica', start: 63, end: 66 },  // 4
+                { name: 'Historia del Perú', start: 67, end: 69 },  // 3
+                { name: 'Historia Universal', start: 70, end: 72 }, // 3
+                { name: 'Geografía', start: 73, end: 76 },         // 4
+                { name: 'Economía', start: 77, end: 84 },          // 8
+                { name: 'Filosofía', start: 85, end: 88 },         // 4
+                { name: 'Física', start: 89, end: 92 },            // 4
+                { name: 'Química', start: 93, end: 96 },           // 4
+                { name: 'Biología', start: 97, end: 100 }          // 4
+            ],
+            'E': [
+                /* SECCIÓN DE ACTITUD Y HABILIDADES (1 - 30) */
+                { name: 'Actitudinal', start: 1, end: 10 },
+                { name: 'Habilidad Verbal', start: 11, end: 20 },
+                { name: 'Habilidad Lógico-Matemática', start: 21, end: 30 },
+
+                /* CONOCIMIENTOS - ÁREA E (31 - 100) */
+                { name: 'Aritmética', start: 31, end: 32 },        // 2
+                { name: 'Geometría', start: 33, end: 34 },         // 2
+                { name: 'Álgebra', start: 35, end: 36 },           // 2
+                { name: 'Trigonometría', start: 37, end: 38 },     // 2
+                { name: 'Lenguaje', start: 39, end: 46 },          // 8
+                { name: 'Literatura', start: 47, end: 52 },        // 6
+                { name: 'Psicología', start: 53, end: 58 },        // 6
+                { name: 'Educación Cívica', start: 59, end: 62 },  // 4
+                { name: 'Historia del Perú', start: 63, end: 67 },  // 5
+                { name: 'Historia Universal', start: 68, end: 72 }, // 5
+                { name: 'Geografía', start: 73, end: 77 },         // 5
+                { name: 'Economía', start: 78, end: 82 },          // 5
+                { name: 'Filosofía', start: 83, end: 88 },         // 6
+                { name: 'Física', start: 89, end: 92 },            // 4
+                { name: 'Química', start: 93, end: 96 },           // 4
+                { name: 'Biología', start: 97, end: 100 }          // 4
+            ]
+        };
+
+        // Helper function for Discipline Styling Badges
+        function getDisciplineBadgeClass(discipline) {
+            switch(discipline) {
+                case 'MATEMÁTICA':
+                    return 'bg-blue-100 text-blue-800 border-blue-200';
+                case 'COMUNICACIÓN':
+                    return 'bg-sky-100 text-sky-800 border-sky-200';
+                case 'PERSONA, FAMILIA Y RELACIONES HUMANAS':
+                    return 'bg-purple-100 text-purple-800 border-purple-200';
+                case 'CIENCIAS SOCIALES':
+                    return 'bg-amber-100 text-amber-800 border-amber-200';
+                case 'CIENCIA TECNOLOGÍA Y AMBIENTE':
+                    return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+                default:
+                    return 'bg-slate-100 text-slate-700 border-slate-200';
+            }
+        }
+
+        let studentAnswers = {};
+        let officialKeys = {}; // Keys by Area: { 'A': { 1: 'A', ... }, 'B': ... }
+        let evaluatedStudents = [];
+        let examTimerInterval = null;
+        let timeRemainingSeconds = 2.5 * 3600; // 2h 30m = 9000s
+        let isExamActive = false;
+
+        // On Load Initialization
+        window.onload = function() {
+            loadInitialData();
+            renderOpticalSheet('A'); // Default render Area A
+            renderStudentsTable();
+            renderAdminStats();
+        };
+
+        function loadInitialData() {
+            // Load saved official keys or generate default demo keys
+            const savedKeys = localStorage.getItem('hipatia_official_keys');
+            if (savedKeys) {
+                officialKeys = JSON.parse(savedKeys);
+            } else {
+                ['A', 'B', 'C', 'D', 'E'].forEach(area => {
+                    officialKeys[area] = {};
+                    const options = ['A', 'B', 'C', 'D', 'E'];
+                    for (let i = 1; i <= 100; i++) {
+                        officialKeys[area][i] = options[Math.floor(Math.random() * options.length)];
+                    }
+                });
+                localStorage.setItem('hipatia_official_keys', JSON.stringify(officialKeys));
+            }
+
+            // Load saved student evaluations
+            const savedStudents = localStorage.getItem('hipatia_students');
+            if (savedStudents) {
+                evaluatedStudents = JSON.parse(savedStudents);
+            }
+        }
+
+        function handleAreaChange() {
+            const areaSelect = document.getElementById('studentArea');
+            const careerSelect = document.getElementById('studentCareer');
+            const selectedArea = areaSelect.value;
+
+            careerSelect.innerHTML = '<option value="">-- Seleccionar Carrera --</option>';
+
+            if (selectedArea && CAREERS_BY_AREA[selectedArea]) {
+                careerSelect.disabled = false;
+                CAREERS_BY_AREA[selectedArea].forEach(career => {
+                    const opt = document.createElement('option');
+                    opt.value = career;
+                    opt.textContent = career;
+                    careerSelect.appendChild(opt);
+                });
+                renderOpticalSheet(selectedArea);
+            } else {
+                careerSelect.disabled = true;
+                renderOpticalSheet('A');
+            }
+        }
+
+        function renderOpticalSheet(area) {
+            studentAnswers = {};
+            updateAnsweredCount();
+
+            const actitudContainer = document.getElementById('actitudGrid');
+            const conocimientosContainer = document.getElementById('conocimientosGrid');
+
+            actitudContainer.innerHTML = '';
+            conocimientosContainer.innerHTML = '';
+
+            const courses = COURSES_DISTRIBUTION[area] || COURSES_DISTRIBUTION['A'];
+
+            courses.forEach(course => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-3.5 rounded-lg border border-slate-200 shadow-sm space-y-2.5 flex flex-col justify-between";
+
+                let html = `
+                    <div>
+                        <div class="flex items-center justify-between border-b border-slate-200 pb-1.5 mb-2">
+                            <span class="font-bold text-xs uppercase text-slate-800 tracking-wide">${course.name}</span>
+                            <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-mono font-bold">P${course.start}-P${course.end}</span>
+                        </div>
+                        <div class="space-y-2">
+                `;
+
+                for (let q = course.start; q <= course.end; q++) {
+                    html += `
+                        <div class="flex items-center justify-between py-1 border-b border-slate-100 text-xs">
+                            <span class="font-bold font-mono text-slate-600 w-8">${q.toString().padStart(2, '0')}.</span>
+                            <div class="flex items-center space-x-1.5 sm:space-x-2">
+                    `;
+                    ['A', 'B', 'C', 'D', 'E'].forEach(opt => {
+                        html += `
+                            <div onclick="selectBubble(${q}, '${opt}', this)" class="bubble bubble-${q}" data-q="${q}" data-opt="${opt}">
+                                ${opt}
+                            </div>
+                        `;
+                    });
+                    html += `</div></div>`;
+                }
+
+                html += `</div></div>`;
+                card.innerHTML = html;
+
+                if (course.end <= 30) {
+                    actitudContainer.appendChild(card);
+                } else {
+                    conocimientosContainer.appendChild(card);
+                }
+            });
+        }
+
+        function selectBubble(questionNum, option, element) {
+            if (!isExamActive) {
+                // Flash alert banner to warn user
+                const banner = document.getElementById('startExamBanner');
+                banner.classList.add('ring-4', 'ring-amber-400');
+                setTimeout(() => banner.classList.remove('ring-4', 'ring-amber-400'), 1000);
+            }
+
+            const bubbles = document.querySelectorAll(`.bubble-${questionNum}`);
+            bubbles.forEach(b => b.classList.remove('selected'));
+
+            if (studentAnswers[questionNum] === option) {
+                delete studentAnswers[questionNum];
+            } else {
+                studentAnswers[questionNum] = option;
+                element.classList.add('selected');
+            }
+
+            updateAnsweredCount();
+        }
+
+        function updateAnsweredCount() {
+            const count = Object.keys(studentAnswers).length;
+            document.getElementById('answeredCount').textContent = count;
+        }
+
+        function startExamTimer() {
+            if (isExamActive) return;
+
+            const name = document.getElementById('studentName').value;
+            const dni = document.getElementById('studentDNI').value;
+            const area = document.getElementById('studentArea').value;
+            const career = document.getElementById('studentCareer').value;
+
+            if (!name || !dni || !area || !career) {
+                alert('Por favor complete todos los datos de la Sección de Identificación antes de iniciar el examen.');
+                scrollToSection('sec-identificacion');
+                return;
+            }
+
+            isExamActive = true;
+            document.getElementById('startExamBanner').classList.add('hidden');
+            document.getElementById('headerTimerCard').classList.remove('hidden');
+            document.getElementById('footerTimerDisplay').classList.remove('hidden');
+
+            const submitBtn = document.getElementById('btnSubmitExam');
+            submitBtn.disabled = false;
+            submitBtn.className = "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm px-6 py-2.5 rounded-lg shadow-md transition transform active:scale-95 cursor-pointer flex items-center space-x-1.5";
+
+            examTimerInterval = setInterval(() => {
+                timeRemainingSeconds--;
+                if (timeRemainingSeconds <= 0) {
+                    clearInterval(examTimerInterval);
+                    alert('¡El tiempo ha finalizado! Sus respuestas serán procesadas automáticamente.');
+                    handleStudentSubmit(new Event('submit'));
+                }
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const hrs = Math.floor(timeRemainingSeconds / 3600);
+            const mins = Math.floor((timeRemainingSeconds % 3600) / 60);
+            const secs = timeRemainingSeconds % 60;
+
+            const formatted = `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            document.getElementById('timerDisplay').textContent = formatted;
+            document.getElementById('mobileTimerText').textContent = formatted;
+        }
+
+        function handleStudentSubmit(e) {
+            e.preventDefault();
+
+            if (examTimerInterval) clearInterval(examTimerInterval);
+
+            const name = document.getElementById('studentName').value;
+            const dni = document.getElementById('studentDNI').value;
+            const area = document.getElementById('studentArea').value;
+            const career = document.getElementById('studentCareer').value;
+
+            const timeUsedSeconds = (2.5 * 3600) - timeRemainingSeconds;
+            const minsUsed = Math.floor(timeUsedSeconds / 60);
+            const secsUsed = timeUsedSeconds % 60;
+            const formattedTimeUsed = `${minsUsed}m ${secsUsed}s`;
+
+            const currentKeys = officialKeys[area] || {};
+            let good = 0, bad = 0, blank = 0;
+            let questionsDetails = [];
+
+            for (let i = 1; i <= 100; i++) {
+                const studentAns = studentAnswers[i] || null;
+                const correctAns = currentKeys[i] || 'A';
+
+                if (!studentAns) {
+                    blank++;
+                    questionsDetails.push({ num: i, studentAns: '-', correctAns, status: 'blank' });
+                } else if (studentAns === correctAns) {
+                    good++;
+                    questionsDetails.push({ num: i, studentAns, correctAns, status: 'good' });
+                } else {
+                    bad++;
+                    questionsDetails.push({ num: i, studentAns, correctAns, status: 'bad' });
+                }
+            }
+
+            const totalScore = (good * 20.00) - (bad * 1.125);
+
+            const record = {
+                id: Date.now(),
+                timestamp: new Date().toISOString(),
+                formattedDate: new Date().toLocaleDateString('es-PE') + ' ' + new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }),
+                name,
+                dni,
+                area,
+                career,
+                timeUsed: formattedTimeUsed,
+                good,
+                bad,
+                blank,
+                score: totalScore.toFixed(3),
+                questionsDetails
+            };
+
+            evaluatedStudents.unshift(record);
+            localStorage.setItem('hipatia_students', JSON.stringify(evaluatedStudents));
+
+            // Display Results Modal
+            showStudentResultModal(record);
+
+            // Refresh Admin Views
+            renderStudentsTable();
+            renderAdminStats();
+        }
+
+        function showStudentResultModal(record) {
+            document.getElementById('resStudentName').textContent = record.name;
+            document.getElementById('resStudentDNI').textContent = record.dni;
+            document.getElementById('resStudentArea').textContent = `Área ${record.area}`;
+            document.getElementById('resStudentCareer').textContent = record.career;
+            document.getElementById('resStudentTime').textContent = record.timeUsed;
+
+            document.getElementById('resGood').textContent = record.good;
+            document.getElementById('resBad').textContent = record.bad;
+            document.getElementById('resBlank').textContent = record.blank;
+            document.getElementById('resScore').textContent = record.score;
+
+            const grid = document.getElementById('resQuestionsGrid');
+            grid.innerHTML = '';
+
+            record.questionsDetails.forEach(q => {
+                const box = document.createElement('div');
+                let bgClass = 'bg-slate-100 text-slate-600 border-slate-300';
+                if (q.status === 'good') bgClass = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold';
+                if (q.status === 'bad') bgClass = 'bg-red-100 text-red-800 border-red-300 font-bold';
+
+                box.className = `p-1.5 rounded border text-[11px] text-center ${bgClass}`;
+                box.innerHTML = `
+                    <div class="text-[9px] opacity-75 font-mono">P${q.num}</div>
+                    <div>${q.studentAns} <span class="text-[9px] opacity-60">(${q.correctAns})</span></div>
+                `;
+                grid.appendChild(box);
+            });
+
+            document.getElementById('studentResultModal').classList.remove('hidden');
+        }
+
+        function closeResultModal() {
+            document.getElementById('studentResultModal').classList.add('hidden');
+        }
+
+        function openAdminAuthModal() {
+            document.getElementById('adminAuthModal').classList.remove('hidden');
+            document.getElementById('adminPasswordInput').value = '';
+            document.getElementById('adminAuthError').classList.add('hidden');
+        }
+
+        function closeAdminAuthModal() {
+            document.getElementById('adminAuthModal').classList.add('hidden');
+        }
+
+        function togglePasswordVisibility() {
+            const input = document.getElementById('adminPasswordInput');
+            const icon = document.getElementById('togglePasswordIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fa-solid fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fa-solid fa-eye';
+            }
+        }
+
+        function verifyAdminPassword(e) {
+            e.preventDefault();
+            const pass = document.getElementById('adminPasswordInput').value;
+            // Clave del docente autorizada
+            if (pass === '091125') {
+                closeAdminAuthModal();
+                toggleAdminModal();
+            } else {
+                document.getElementById('adminAuthError').classList.remove('hidden');
+            }
+        }
+
+        function toggleAdminModal() {
+            const modal = document.getElementById('adminModal');
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                renderAdminKeysGrid();
+                renderAdminStats();
+                renderStudentsTable();
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function switchAdminTab(tab) {
+            document.getElementById('adminTabKeys').classList.add('hidden');
+            document.getElementById('adminTabStats').classList.add('hidden');
+            document.getElementById('adminTabStudents').classList.add('hidden');
+
+            document.getElementById('tabBtnKeys').className = "px-5 py-3 border-b-2 border-transparent text-slate-600 hover:text-slate-900 flex items-center space-x-2";
+            document.getElementById('tabBtnStats').className = "px-5 py-3 border-b-2 border-transparent text-slate-600 hover:text-slate-900 flex items-center space-x-2";
+            document.getElementById('tabBtnStudents').className = "px-5 py-3 border-b-2 border-transparent text-slate-600 hover:text-slate-900 flex items-center space-x-2";
+
+            if (tab === 'keys') {
+                document.getElementById('adminTabKeys').classList.remove('hidden');
+                document.getElementById('tabBtnKeys').className = "px-5 py-3 border-b-2 border-amber-500 text-amber-600 bg-white flex items-center space-x-2 font-bold";
+            } else if (tab === 'stats') {
+                document.getElementById('adminTabStats').classList.remove('hidden');
+                document.getElementById('tabBtnStats').className = "px-5 py-3 border-b-2 border-amber-500 text-amber-600 bg-white flex items-center space-x-2 font-bold";
+            } else if (tab === 'students') {
+                document.getElementById('adminTabStudents').classList.remove('hidden');
+                document.getElementById('tabBtnStudents').className = "px-5 py-3 border-b-2 border-amber-500 text-amber-600 bg-white flex items-center space-x-2 font-bold";
+            }
+        }
+
+        function changeAdminAreaKeys() {
+            renderAdminKeysGrid();
+        }
+
+        function renderAdminKeysGrid() {
+            const area = document.getElementById('adminAreaSelect').value;
+            const keysGrid = document.getElementById('adminKeysGrid');
+            keysGrid.innerHTML = '';
+
+            const courses = COURSES_DISTRIBUTION[area] || COURSES_DISTRIBUTION['A'];
+            const currentKeys = officialKeys[area] || {};
+
+            courses.forEach(course => {
+                const courseBlock = document.createElement('div');
+                courseBlock.className = "p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2";
+
+                let html = `
+                    <div class="flex flex-wrap items-center justify-between border-b border-slate-200 pb-1.5 gap-1">
+                        <span class="font-bold text-xs text-slate-800 uppercase">${course.name}</span>
+                        <span class="text-slate-500 font-mono text-[11px]">Preguntas ${course.start} a ${course.end}</span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-10 gap-2 pt-1">
+                `;
+
+                for (let q = course.start; q <= course.end; q++) {
+                    const selectedOpt = currentKeys[q] || 'A';
+                    html += `
+                        <div class="flex flex-col items-center bg-white p-1 rounded border border-slate-200 shadow-sm">
+                            <span class="text-[10px] font-bold text-slate-500 font-mono">P${q}</span>
+                            <select data-q="${q}" class="admin-key-select mt-1 text-xs font-bold p-1 rounded bg-slate-100 border border-slate-300 focus:ring-1 focus:ring-amber-500">
+                                ${['A', 'B', 'C', 'D', 'E'].map(o => `<option value="${o}" ${o === selectedOpt ? 'selected' : ''}>${o}</option>`).join('')}
+                            </select>
+                        </div>
+                    `;
+                }
+
+                html += `</div>`;
+                courseBlock.innerHTML = html;
+                keysGrid.appendChild(courseBlock);
+            });
+        }
+
+        function saveAdminKeys() {
+            const area = document.getElementById('adminAreaSelect').value;
+            const selects = document.querySelectorAll('.admin-key-select');
+
+            selects.forEach(select => {
+                const q = select.getAttribute('data-q');
+                officialKeys[area][q] = select.value;
+            });
+
+            localStorage.setItem('hipatia_official_keys', JSON.stringify(officialKeys));
+            alert(`¡Claves para el Área ${area} guardadas correctamente!`);
+        }
+
+        function autoFillRandomKeys() {
+            const area = document.getElementById('adminAreaSelect').value;
+            const options = ['A', 'B', 'C', 'D', 'E'];
+            for (let i = 1; i <= 100; i++) {
+                officialKeys[area][i] = options[Math.floor(Math.random() * options.length)];
+            }
+            renderAdminKeysGrid();
+        }
+
+        function renderAdminStats() {
+            const dateFilter = document.getElementById('filterDateInput').value;
+            let filtered = evaluatedStudents;
+
+            if (dateFilter) {
+                filtered = evaluatedStudents.filter(s => s.timestamp.startsWith(dateFilter));
+            }
+
+            document.getElementById('statTotalStudents').textContent = filtered.length;
+
+            if (filtered.length === 0) {
+                document.getElementById('statMaxScore').textContent = '0.00';
+                document.getElementById('statAvgScore').textContent = '0.00';
+                document.getElementById('statWorstCourse').textContent = 'N/A';
+                document.getElementById('areaAveragesGrid').innerHTML = '<div class="col-span-5 text-xs text-slate-400 py-2">Sin datos registrados</div>';
+                return;
+            }
+
+            const scores = filtered.map(s => parseFloat(s.score));
+            const maxScore = Math.max(...scores);
+            const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+
+            document.getElementById('statMaxScore').textContent = maxScore.toFixed(2);
+            document.getElementById('statAvgScore').textContent = avgScore.toFixed(2);
+
+            // Area Averages Breakdown
+            const areaGrid = document.getElementById('areaAveragesGrid');
+            areaGrid.innerHTML = '';
+            ['A', 'B', 'C', 'D', 'E'].forEach(area => {
+                const areaStudents = filtered.filter(s => s.area === area);
+                const areaAvg = areaStudents.length > 0 ? (areaStudents.reduce((a, b) => a + parseFloat(b.score), 0) / areaStudents.length) : 0;
+
+                areaGrid.innerHTML += `
+                    <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                        <span class="text-[11px] font-bold text-slate-500 uppercase block">Área ${area} (${areaStudents.length})</span>
+                        <span class="text-base font-extrabold text-slate-800">${areaAvg.toFixed(2)}</span>
+                    </div>
+                `;
+            });
+        }
+
+        function renderStudentsTable() {
+            const tbody = document.getElementById('studentsTableBody');
+            const search = (document.getElementById('searchStudentInput').value || '').toLowerCase();
+            const dateFilter = document.getElementById('filterDateInput').value;
+
+            tbody.innerHTML = '';
+
+            let filtered = evaluatedStudents.filter(s => {
+                const matchesSearch = s.name.toLowerCase().includes(search) || s.dni.includes(search);
+                const matchesDate = dateFilter ? s.timestamp.startsWith(dateFilter) : true;
+                return matchesSearch && matchesDate;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center p-6 text-slate-400 text-xs">No se encontraron registros evaluados.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach((s, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition border-b border-slate-200";
+                tr.innerHTML = `
+                    <td class="p-3 font-mono font-bold text-slate-500">${idx + 1}</td>
+                    <td class="p-3 text-slate-600 whitespace-nowrap">${s.formattedDate}</td>
+                    <td class="p-3 font-bold text-slate-900">${s.name}</td>
+                    <td class="p-3 font-mono">${s.dni}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">Área ${s.area}</span>
+                        <span class="text-slate-600 ml-1">${s.career}</span>
+                    </td>
+                    <td class="p-3 text-center font-mono">
+                        <span class="text-emerald-600 font-bold">${s.good}</span> / 
+                        <span class="text-red-600 font-bold">${s.bad}</span> / 
+                        <span class="text-slate-400">${s.blank}</span>
+                    </td>
+                    <td class="p-3 text-right font-black font-mono text-amber-700 text-sm">${s.score}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterStudentsTable() {
+            renderStudentsTable();
+        }
+
+        function resetDateFilter() {
+            document.getElementById('filterDateInput').value = '';
+            renderStudentsTable();
+            renderAdminStats();
+        }
+
+        function exportToCSV() {
+            if (evaluatedStudents.length === 0) {
+                alert('No hay datos para exportar.');
+                return;
+            }
+
+            let csv = 'ID,Fecha,Nombre,DNI,Area,Carrera,Buenas,Malas,Blanco,Puntaje\n';
+            evaluatedStudents.forEach(s => {
+                csv += `"${s.id}","${s.formattedDate}","${s.name}","${s.dni}","${s.area}","${s.career}",${s.good},${s.bad},${s.blank},"${s.score}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Resultados_Hipatia_${new Date().toISOString().slice(0, 10)}.csv`;
+            a.click();
+        }
+
+        function clearAllData() {
+            if (confirm('¿Está seguro de que desea borrar TODOS los registros de evaluados? Esta acción no se puede deshacer.')) {
+                evaluatedStudents = [];
+                localStorage.removeItem('hipatia_students');
+                renderStudentsTable();
+                renderAdminStats();
+            }
+        }
+
+        function scrollToSection(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function toggleSectionCollapse(wrapperId, chevronId) {
+            const wrapper = document.getElementById(wrapperId);
+            const chevron = document.getElementById(chevronId);
+            if (wrapper.classList.contains('collapsed')) {
+                wrapper.classList.remove('collapsed');
+                if (chevron) chevron.classList.remove('rotated');
+            } else {
+                wrapper.classList.add('collapsed');
+                if (chevron) chevron.classList.add('rotated');
+            }
+        }
+    </script>
+</body>
+</html>
