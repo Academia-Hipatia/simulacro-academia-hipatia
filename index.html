@@ -165,9 +165,10 @@
             <!-- Fila Superior: Marca/Logo + Botones Principales -->
             <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div class="flex items-center space-x-3.5">
-                    <div class="w-11 h-11 rounded-full bg-gradient-to-tr from-brand-gold to-amber-200 p-0.5 shadow-lg flex-shrink-0">
-                        <div class="w-full h-full bg-brand-black rounded-full flex items-center justify-center border border-brand-gold/40">
-                            <i class="fa-solid fa-graduation-cap text-brand-gold text-xl"></i>
+                    <!-- LOGO DE LA ACADEMIA HIPATIA -->
+                    <div class="w-14 h-14 rounded-full bg-gradient-to-tr from-brand-gold to-amber-200 p-0.5 shadow-lg flex-shrink-0">
+                        <div class="w-full h-full bg-brand-black rounded-full overflow-hidden flex items-center justify-center border border-brand-gold/40">
+                            <img src="cropped_circle_image.png" alt="Logo Academia Hipatia" class="w-full h-full object-cover">
                         </div>
                     </div>
                     <div>
@@ -885,7 +886,6 @@
         let pendingDeleteId = null;
         let isBulkDelete = false;
 
-        // Función auxiliar para obtener la fecha YYYY-MM-DD de un registro de forma infalible
         function getStudentDateISO(s) {
             if (s.dateOnly && /^\d{4}-\d{2}-\d{2}$/.test(s.dateOnly)) {
                 return s.dateOnly;
@@ -1216,7 +1216,6 @@
                 .replace(/\s+/g, ' ');
         }
 
-        // Verifica de manera estricta si el usuario (DNI o Nombre) ya registró examen el día de HOY
         function hasStudentSubmittedToday(name, dni) {
             const now = new Date();
             const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -1332,7 +1331,6 @@
                 return;
             }
 
-            // Bloquear intento si ya existe evaluación el día de hoy
             if (hasStudentSubmittedToday(name, dni)) {
                 alert(`⚠️ ATENCIÓN: El postulante ${name.trim().toUpperCase()} (DNI/Código: ${dni.trim()}) YA HA REGISTRADO su examen el día de hoy.\n\nSolo se permite un registro por estudiante al día.`);
                 return;
@@ -1367,7 +1365,6 @@
 
             const totalScore = (good * 20.00) - (bad * 1.125);
 
-            // Guardar fecha ISO local exacta (YYYY-MM-DD)
             const now = new Date();
             const dateOnlyISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
