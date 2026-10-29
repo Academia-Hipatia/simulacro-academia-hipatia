@@ -235,6 +235,26 @@
 
     <main class="flex-grow max-w-7xl w-full mx-auto p-3 sm:p-6 space-y-6">
 
+        <!-- Caja de Alerta de Estado (usada por JavaScript al intentar marcar sin iniciar) -->
+        <div id="statusAlertBox" class="hidden bg-amber-100 border-l-4 border-amber-500 text-amber-900 p-4 rounded-r-lg shadow-sm font-medium text-xs sm:text-sm transition-all duration-300">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-triangle-exclamation text-amber-600 text-lg"></i>
+                <span id="statusAlertMessage">Por favor complete sus datos e inicie el examen.</span>
+            </div>
+        </div>
+
+        <!-- Instrucciones de Llenado -->
+        <div class="bg-brand-beige rounded-xl p-4 shadow-sm border border-slate-200/80">
+            <div class="flex items-start space-x-3">
+                <div class="w-8 h-8 rounded-lg bg-amber-100 text-brand-darkGold flex items-center justify-center font-bold text-sm flex-shrink-0 mt-0.5">
+                    <i class="fa-solid fa-info"></i>
+                </div>
+                <div class="text-xs sm:text-sm text-slate-700 leading-relaxed">
+                    <strong class="text-slate-900 font-bold">Instrucciones de llenado:</strong> Complete primero sus datos personales. Luego pulse <strong class="text-amber-700 font-bold">"Comenzar Examen (2h 30m)"</strong> para habilitar el marcado de burbujas. Marque una sola alternativa por pregunta. Cada respuesta correcta suma <strong class="text-emerald-700 font-bold">+20.00 pts</strong> y cada respuesta errónea descuenta <strong class="text-red-600 font-bold">-1.125 pts</strong>.
+                </div>
+            </div>
+        </div>
+
         <div id="adminAuthModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[55] flex items-center justify-center p-4 hidden">
             <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 border border-slate-200 relative">
                 <button onclick="closeAdminAuthModal()" class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 text-xl font-bold p-1">&times;</button>
