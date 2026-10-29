@@ -2022,8 +2022,10 @@
     import { 
       getFirestore, collection, addDoc, getDocs, doc, setDoc, getDoc 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { 
+      getAuth, signInWithEmailAndPassword 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    // Configuración con tus credenciales de Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyDV-Zc-btpZci_E5QwuEUNezZxEXCQsTFs",
       authDomain: "simulacro-academiahipatia.firebaseapp.com",
@@ -2033,17 +2035,25 @@
       appId: "1:419986758134:web:ae610b26fed64d90174fd7"
     };
 
-    // Inicializar la app y la base de datos
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
 
-    // FUNCIONES GLOBALES (Disponibles para tu página)
+    // --- AUTENTICACIÓN SEGURA DEL DOCENTE ---
+    window.loginDocenteNube = async function(correo, password) {
+      try {
+        await signInWithEmailAndPassword(auth, correo, password);
+        return true; // Login exitoso
+      } catch (error) {
+        console.error("Error al autenticar:", error);
+        return false; // Credenciales incorrectas
+      }
+    };
 
-    // 1. Guardar examen resuelto
+    // --- FUNCIONES DE EVALUACIÓN ---
     window.guardarEvaluacionEnNube = async function(datos) {
       try {
         const docRef = await addDoc(collection(db, "evaluaciones"), datos);
-        console.log("Evaluación guardada en nube con ID:", docRef.id);
         return true;
       } catch (e) {
         console.error("Error guardando en nube:", e);
@@ -2051,7 +2061,6 @@
       }
     };
 
-    // 2. Cargar lista de postulantes evaluados
     window.cargarEvaluadosDeNube = async function() {
       try {
         const querySnapshot = await getDocs(collection(db, "evaluaciones"));
@@ -2066,7 +2075,6 @@
       }
     };
 
-    // 3. Guardar claves oficiales
     window.guardarClavesEnNube = async function(area, claves) {
       try {
         await setDoc(doc(db, "claves_oficiales", area), { claves: claves });
@@ -2076,7 +2084,6 @@
       }
     };
 
-    // 4. Obtener claves oficiales
     window.obtenerClavesDeNube = async function(area) {
       try {
         const docSnap = await getDoc(doc(db, "claves_oficiales", area));
