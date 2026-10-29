@@ -235,23 +235,43 @@
 
     <main class="flex-grow max-w-7xl w-full mx-auto p-3 sm:p-6 space-y-6">
 
-        <div id="statusAlertBox" class="hidden bg-amber-100 border-l-4 border-amber-500 text-amber-900 p-4 rounded-r-lg shadow-sm font-medium text-xs sm:text-sm transition-all duration-300">
-            <div class="flex items-center space-x-2">
-                <i class="fa-solid fa-triangle-exclamation text-amber-600 text-lg"></i>
-                <span id="statusAlertMessage">Por favor complete sus datos e inicie el examen.</span>
-            </div>
-        </div>
+        <div id="adminAuthModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[55] flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 border border-slate-200 relative">
+            <button onclick="closeAdminAuthModal()" class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 text-xl font-bold p-1">&times;</button>
+            <div class="text-center space-y-3">
+                <div class="w-14 h-14 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto text-2xl shadow-inner">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900">Acceso Restringido</h3>
+                    <p class="text-xs text-slate-500 mt-1">Ingrese el PIN de docente para acceder al panel.</p>
+                </div>
 
-        <div class="bg-brand-beige rounded-xl p-4 shadow-sm border border-slate-200/80">
-            <div class="flex items-start space-x-3">
-                <div class="w-8 h-8 rounded-lg bg-amber-100 text-brand-darkGold flex items-center justify-center font-bold text-sm flex-shrink-0 mt-0.5">
-                    <i class="fa-solid fa-info"></i>
-                </div>
-                <div class="text-xs sm:text-sm text-slate-700 leading-relaxed">
-                    <strong class="text-slate-900 font-bold">Instrucciones de llenado:</strong> Complete primero sus datos personales. Luego pulse <strong class="text-amber-700 font-bold">"Comenzar Examen (2h 30m)"</strong> para habilitar el marcado de burbujas. Marque una sola alternativa por pregunta. Cada respuesta correcta suma <strong class="text-emerald-700 font-bold">+20.00 pts</strong> y cada respuesta errónea descuenta <strong class="text-red-600 font-bold">-1.125 pts</strong>.
-                </div>
+                <form onsubmit="verifyAdminPassword(event)" class="space-y-3 pt-2">
+                    <div class="relative">
+                        <input type="password" id="adminPasswordInput" maxlength="6" placeholder="******" required
+                            class="w-full pl-4 pr-10 py-2.5 text-center text-lg font-mono tracking-widest bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none font-bold">
+                        <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 text-sm">
+                            <i id="togglePasswordIcon" class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+
+                    <p id="adminAuthError" class="text-xs text-red-600 font-bold hidden">
+                        <i class="fa-solid fa-circle-xmark mr-1"></i> PIN incorrecto. Intente de nuevo.
+                    </p>
+
+                    <div class="flex items-center space-x-2 pt-1">
+                        <button type="button" onclick="closeAdminAuthModal()" class="w-1/2 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl transition">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="w-1/2 py-2.5 bg-gradient-to-r from-brand-gold to-amber-500 hover:from-amber-500 hover:to-brand-gold text-brand-black text-xs font-black rounded-xl shadow transition">
+                            Ingresar
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
+    </div>
 
         <form id="opticalForm" onsubmit="handleStudentSubmit(event)" class="space-y-6">
 
