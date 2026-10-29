@@ -472,47 +472,6 @@
         </div>
     </div>
 
-    <div id="adminAuthModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[55] flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 border border-slate-200 relative">
-            <button onclick="closeAdminAuthModal()" class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 text-xl font-bold p-1">&times;</button>
-            <div class="text-center space-y-3">
-                <div class="w-14 h-14 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto text-2xl shadow-inner">
-                    <i class="fa-solid fa-lock"></i>
-                </div>
-                <div>
-                    <h3 class="text-lg font-bold text-slate-900">Acceso Restringido</h3>
-                    <p class="text-xs text-slate-500 mt-1">Ingrese sus credenciales de docente para acceder al panel.</p>
-                </div>
-
-                <form onsubmit="verifyAdminPassword(event)" class="space-y-3 pt-2">
-                    <input type="email" id="adminEmailInput" placeholder="Correo electrónico docente" required
-                        class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none">
-                    
-                    <div class="relative">
-                        <input type="password" id="adminPasswordInput" placeholder="Contraseña" required
-                            class="w-full pl-4 pr-10 py-2.5 text-center text-lg font-mono tracking-widest bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none font-bold">
-                        <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 text-sm">
-                            <i id="togglePasswordIcon" class="fa-solid fa-eye"></i>
-                        </button>
-                    </div>
-
-                    <p id="adminAuthError" class="text-xs text-red-600 font-bold hidden">
-                        <i class="fa-solid fa-circle-xmark mr-1"></i> Credenciales incorrectas. Intente de nuevo.
-                    </p>
-
-                    <div class="flex items-center space-x-2 pt-1">
-                        <button type="button" onclick="closeAdminAuthModal()" class="w-1/2 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl transition">
-                            Cancelar
-                        </button>
-                        <button type="submit" class="w-1/2 py-2.5 bg-gradient-to-r from-brand-gold to-amber-500 hover:from-amber-500 hover:to-brand-gold text-brand-black text-xs font-black rounded-xl shadow transition">
-                            Ingresar
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
     <div id="adminModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden overflow-y-auto">
         <div class="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[92vh] flex flex-col overflow-hidden my-auto border border-slate-200">
             <div class="bg-gradient-to-r from-brand-black via-slate-900 to-brand-black p-4 text-white flex items-center justify-between border-b-2 border-brand-gold">
@@ -943,7 +902,16 @@
 
             let filtered = evaluatedStudents.filter(s => {
                 const matchesSearch = s.name.toLowerCase().includes(search) || s.dni.includes(search);
-                const matchesDate = dateFilter ? (s.timestamp && s.timestamp.startsWith(dateFilter)) : true;
+                
+                // Extraer la fecha estándar YYYY-MM-DD para comparar con el calendario
+                let studentDate = '';
+                if (s.dateOnly) {
+                    studentDate = s.dateOnly;
+                } else if (s.timestamp) {
+                    studentDate = s.timestamp.split('T')[0];
+                }
+
+                const matchesDate = dateFilter ? (studentDate === dateFilter) : true;
                 return matchesSearch && matchesDate;
             });
 
@@ -954,7 +922,7 @@
 
             filtered.forEach((s, idx) => {
                 const dateParts = s.formattedDate ? s.formattedDate.split(' ') : ['-', ''];
-                const dateOnly = dateParts[0] || '-';
+                const displayDate = dateParts[0] || '-';
                 const timeOnly = dateParts.slice(1).join(' ') || '-';
 
                 const tr = document.createElement('tr');
@@ -962,7 +930,7 @@
                 tr.innerHTML = `
                     <td class="p-3 font-mono font-bold text-slate-500 text-center">${idx + 1}</td>
                     <td class="p-3 whitespace-nowrap">
-                        <div class="font-bold text-slate-800 text-xs">${dateOnly}</div>
+                        <div class="font-bold text-slate-800 text-xs">${displayDate}</div>
                         <div class="text-[10px] text-slate-500 font-semibold">${timeOnly}</div>
                     </td>
                     <td class="p-3 font-bold text-slate-900">${s.name}</td>
@@ -1247,12 +1215,13 @@
 
         // Check if student already submitted an exam today
         function hasStudentSubmittedToday(name, dni) {
-            const todayStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
             const normName = normalizeString(name);
             const normDni = normalizeString(dni);
 
             return evaluatedStudents.some(student => {
-                const studentDate = student.timestamp ? student.timestamp.slice(0, 10) : '';
+                let studentDate = student.dateOnly || (student.timestamp ? student.timestamp.split('T')[0] : '');
                 if (studentDate !== todayStr) return false;
 
                 const studentNormName = normalizeString(student.name);
@@ -1397,9 +1366,14 @@
 
             const totalScore = (good * 20.00) - (bad * 1.125);
 
+            // Generar fecha local en formato YYYY-MM-DD
+            const now = new Date();
+            const dateOnlyISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
             const record = {
-                timestamp: new Date().toISOString(),
-                formattedDate: new Date().toLocaleDateString('es-PE') + ' ' + new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }),
+                timestamp: now.toISOString(),
+                dateOnly: dateOnlyISO,
+                formattedDate: now.toLocaleDateString('es-PE') + ' ' + now.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }),
                 name,
                 dni,
                 area,
@@ -1531,22 +1505,23 @@
         }
 
         async function verifyAdminPassword(e) {
-    e.preventDefault();
-    const email = "yanguaolazabalry@gmail.com"; // <-- Pon aquí el correo exacto que creaste
-    const pass = document.getElementById('adminPasswordInput').value;
-    
-    if (window.loginDocenteNube) {
-        const exito = await window.loginDocenteNube(email, pass);
-        if (exito) {
-            closeAdminAuthModal();
-            toggleAdminModal();
-        } else {
-            document.getElementById('adminAuthError').classList.remove('hidden');
+            e.preventDefault();
+            const email = "yanguaolazabalry@gmail.com"; // <-- Correo docente
+            const pass = document.getElementById('adminPasswordInput').value;
+            
+            if (window.loginDocenteNube) {
+                const exito = await window.loginDocenteNube(email, pass);
+                if (exito) {
+                    closeAdminAuthModal();
+                    toggleAdminModal();
+                } else {
+                    document.getElementById('adminAuthError').classList.remove('hidden');
+                }
+            } else {
+                alert("Error al cargar módulo de autenticación.");
+            }
         }
-    } else {
-        alert("Error al cargar módulo de autenticación.");
-    }
-}
+
         function toggleAdminModal() {
             const modal = document.getElementById('adminModal');
             if (modal.classList.contains('hidden')) {
@@ -1760,7 +1735,10 @@
             let filtered = evaluatedStudents;
 
             if (dateFilter) {
-                filtered = evaluatedStudents.filter(s => s.timestamp && s.timestamp.startsWith(dateFilter));
+                filtered = evaluatedStudents.filter(s => {
+                    let studentDate = s.dateOnly || (s.timestamp ? s.timestamp.split('T')[0] : '');
+                    return studentDate === dateFilter;
+                });
             }
 
             document.getElementById('statTotalStudents').textContent = filtered.length;
