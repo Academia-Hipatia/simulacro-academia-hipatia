@@ -1531,23 +1531,22 @@
         }
 
         async function verifyAdminPassword(e) {
-            e.preventDefault();
-            const email = "docente@academiahipatia.com"; // Tu correo registrado en Firebase
-            const pass = document.getElementById('adminPasswordInput').value;
-            
-            if (window.loginDocenteNube) {
-                const exito = await window.loginDocenteNube(email, pass);
-                if (exito) {
-                    closeAdminAuthModal();
-                    toggleAdminModal();
-                } else {
-                    document.getElementById('adminAuthError').classList.remove('hidden');
-                }
-            } else {
-                alert("Error al cargar módulo de autenticación.");
-            }
+    e.preventDefault();
+    const email = "yanguaolazabalry@gmail.com"; // <-- Pon aquí el correo exacto que creaste
+    const pass = document.getElementById('adminPasswordInput').value;
+    
+    if (window.loginDocenteNube) {
+        const exito = await window.loginDocenteNube(email, pass);
+        if (exito) {
+            closeAdminAuthModal();
+            toggleAdminModal();
+        } else {
+            document.getElementById('adminAuthError').classList.remove('hidden');
         }
-
+    } else {
+        alert("Error al cargar módulo de autenticación.");
+    }
+}
         function toggleAdminModal() {
             const modal = document.getElementById('adminModal');
             if (modal.classList.contains('hidden')) {
